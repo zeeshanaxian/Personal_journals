@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="names">
+        <item>onday 02</item>
+        <item>Tuesday 03</item>
+        <item>Wed 07</item>
+        <item>Thu 11</item>
+        <item>Fri 20</item>
+    </string-array>
+</resources>
