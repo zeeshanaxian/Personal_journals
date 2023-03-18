@@ -19,6 +19,8 @@ import com.bbox.personaljournal.models.AllNotes
 import com.bbox.personaljournal.recyclerviews.AllNotesRecyclerViewAdapter
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 
 
 /**
@@ -45,12 +47,15 @@ class AllNotesFragment : Fragment() {
         viewModel = ViewModelProvider(this)[AllNotesViewModel::class.java]
         binding.rvJournals.layoutManager = LinearLayoutManager(context)
         viewModel.allNotesMutable.observe(requireActivity()) {
-            val gson = Gson()
-            val jsonString = gson.toJson(it)
-            saveNotesData(jsonString)
-            allNotesRecyclerViewAdapter = AllNotesRecyclerViewAdapter(it)
-            binding.rvJournals.adapter = allNotesRecyclerViewAdapter
-            allNotesRecyclerViewAdapter?.notifyDataSetChanged()
+            if (it != null) {
+                val gson = Gson()
+                val jsonString = gson.toJson(it)
+                saveNotesData(jsonString)
+                allNotesRecyclerViewAdapter = AllNotesRecyclerViewAdapter(it)
+                binding.rvJournals.adapter = allNotesRecyclerViewAdapter
+                allNotesRecyclerViewAdapter?.notifyDataSetChanged()
+                viewModel.allNotesMutable.value = null
+            }
         }
         getFirstOpen()
         binding.btnNext.setOnClickListener {
@@ -61,6 +66,7 @@ class AllNotesFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        lifecycleScope.coroutineContext.cancelChildren()
         _binding = null
     }
 
@@ -92,14 +98,14 @@ class AllNotesFragment : Fragment() {
         lifecycleScope.launchWhenResumed {
             viewModel.saveNotesData(
                 name = name
-            ).collect(){
+            ).collect() {
                 Toast.makeText(requireContext(), "success", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun getNotesData() {
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launch {
             viewModel.getNotesData().collect { event ->
                 getNotesCallBack(event)
             }
@@ -107,7 +113,7 @@ class AllNotesFragment : Fragment() {
     }
 
     private fun getFirstOpen() {
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launch {
             viewModel.getFirstOpen().collect { event ->
                 firstOpenCallBack(event)
             }
@@ -132,7 +138,7 @@ class AllNotesFragment : Fragment() {
 
 
     private fun saveFirstOpen(isFirstOpen: Boolean) {
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launch {
             viewModel.saveFirstOpen(isFirstOpen).collect { event ->
                 firstOpenCallBack(event)
             }
